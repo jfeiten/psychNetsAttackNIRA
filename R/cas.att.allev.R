@@ -1,14 +1,14 @@
 cas.att.allev <- function(net_obj, dt){
 
   g <- createGraphFromAdjacencyMatrix(net_obj)
-  
+
   #numero de repetições
   n <- length(V(g))
 
   model_net <- net_obj
   g2 <- g
   dt2 <- dt
-  
+
 
   #registo dos resultados
   numberofvertices<-integer(n-1)
@@ -24,30 +24,30 @@ cas.att.allev <- function(net_obj, dt){
   strength <- integer(n-1)
   vertex <- integer(n-1)
   components <- integer(n-1)
-  
-  
+
+
 
   #remoção dos vértices
   for(i in 1:(n-1)){
-    
-    print(i)
-    
-    #alleviating_simulated_responses <- simulateAllevResponses(model_net)
-    #alleviating_sum_scores <- customCalculateAllevSumScores(alleviating_simulated_responses)
-    
-    #node_max <- names(sort(abs(alleviating_sum_scores), decreasing = TRUE))[1]
-    #strength_max <- sort(abs(alleviating_sum_scores), decreasing = TRUE)[1]
-    #w <- which(colnames(dt2)==node_max)
-    
-    node_max <- "PhyAct"
-    strength_max <- 10
-    w <- sample(1:ncol(dt2), 1)
-    
-    vertex[i] <- node_max #cálculo e seleção do vértice a remover + registo do nome do vértice
-    strength[i] <- strength_max #registo do valor máximo da força
 
-    #cálculo e registo das propriedades das redes
-    #(verificar: algumas parecem ter sempre 0 | edgedensity parece ser a mesma coisa que graph.density)
+    print(i)
+
+    alleviating_simulated_responses <- simulateAllevResponses(model_net)
+    alleviating_sum_scores <- customCalculateAllevSumScores(alleviating_simulated_responses)
+
+    node_max <- names(sort(abs(alleviating_sum_scores), decreasing = TRUE))[1]
+    strength_max <- sort(abs(alleviating_sum_scores), decreasing = TRUE)[1]
+    w <- which(colnames(dt2)==node_max)
+
+
+    # testing
+    #node_max <- "PhyAct"
+    #strength_max <- 10
+    #w <- sample(1:ncol(dt2), 1)
+
+    vertex[i] <- node_max
+    strength[i] <- strength_max
+
 
     numberofvertices[i]<-igraph::gorder(g2)
     clustersizes[i]<-max(igraph::clusters(g2)$csize)
@@ -62,23 +62,22 @@ cas.att.allev <- function(net_obj, dt){
     components[i] <- igraph::components(g2)$no
 
     dt2 <- dt2[, -w] #remover coluna correspondente na tabela de dados
-    
-    #if(i == 17){browser()}
-    
+
+
     if(length(colnames(dt2)) > 2){
       print("n columns")
       print(length(colnames(dt2)))
       print(colnames(dt2))
-      
+
       tryCatch(
         expr = {
-          
+
           set.seed(1234)
           model_net <- estimateNetwork(dt2, default = c("IsingFit"))
           g2 <- createGraphFromAdjacencyMatrix(model_net)
-          
+
           message("Network successfully estimated.")
-          
+
         },
         error = function(e){
           message('Caught an error!')
@@ -92,24 +91,49 @@ cas.att.allev <- function(net_obj, dt){
           message('All done, quitting.')
         }
       )
-      
-      
+
+
     }
     else{
       print("Matrix with 2 or less columns")
     }
-    
-    
-    #g2 <- igraph::delete.vertices(g2, v=which.max(igraph::degree(g2))) #cálculo e seleção do vértice a remover
 
-    #gráfico após cada remoção (layout não está fixo)
-    #plot(g2, vertex.size=20, vertex.color="darkolivegreen3",
-      #   vertex.label=V(g2)$names, vertex.label.cex=0.8, edge.width=2)
 
   }
 
   #tabela com os resultados do ataque
-  df<-hellno::as.data.frame(cbind(c(vertex, NA), c(strength, NA), c(numberofvertices, NA), c(clustersizes, NA), c(cohesion, NA), c(averagepath, NA), c(adhesion, NA), c(edgedensity, NA), c(transitivity, NA), c(radius, NA), c(density, NA), c(centralization, NA), c(components, NA)), stringAsFactors=F)
-  names(df)<-c( "cas.att.allev.vertex", "cas.att.allev.value", "cas.att.allev.number.of.vertices", "cas.att.allev.maxcsize", "cas.att.allev.cohesion", "cas.allev.deg.averagepath", "cas.att.allev.adhesion", "cas.att.allev.edgedensity", "cas.att.allev.transitivity", "cas.att.allev.radius", "cas.att.allev.density", "cas.att.allev.centralization", "cas.att.allev.components")
+  df <-
+    hellno::as.data.frame(cbind(
+      c(vertex, NA),
+      c(strength, NA),
+      c(numberofvertices, NA),
+      c(clustersizes, NA),
+      c(cohesion, NA),
+      c(averagepath, NA),
+      c(adhesion, NA),
+      c(edgedensity, NA),
+      c(transitivity, NA),
+      c(radius, NA),
+      c(density, NA),
+      c(centralization, NA),
+      c(components, NA)
+    ),
+    stringAsFactors = F)
+  names(df) <-
+    c(
+      "cas.att.allev.vertex",
+      "cas.att.allev.value",
+      "cas.att.allev.number.of.vertices",
+      "cas.att.allev.maxcsize",
+      "cas.att.allev.cohesion",
+      "cas.allev.deg.averagepath",
+      "cas.att.allev.adhesion",
+      "cas.att.allev.edgedensity",
+      "cas.att.allev.transitivity",
+      "cas.att.allev.radius",
+      "cas.att.allev.density",
+      "cas.att.allev.centralization",
+      "cas.att.allev.components"
+    )
   return(df)
 }
