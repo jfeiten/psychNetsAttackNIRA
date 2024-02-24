@@ -26,13 +26,14 @@ cas.att.allev <- function(net_obj, dt){
   components <- integer(n-1)
 
 
-
   #remoção dos vértices
   for(i in 1:(n-1)){
 
     print(i)
 
     alleviating_simulated_responses <- simulateAllevResponses(model_net)
+    rm(model_net)
+
     alleviating_sum_scores <- customCalculateAllevSumScores(alleviating_simulated_responses)
 
 
@@ -87,9 +88,26 @@ cas.att.allev <- function(net_obj, dt){
         warning = function(w){
           message('Caught an warning!')
           print(w)
+
+          # Get the value returned in the warning
+          warning_value <<- w$message
+
+
         },
         finally = {
-          message('All done, quitting.')
+
+          if (!is.null(warning_value)) {
+
+            message("Forcing network estimation")
+
+            set.seed(1234)
+            model_net <- estimateNetwork(dt2, default = c("IsingFit"))
+            g2 <- createGraphFromAdjacencyMatrix(model_net)
+
+          }
+
+          message('All done')
+
         }
       )
 
