@@ -1,28 +1,28 @@
 random.att.nira <- function(net_obj, dt){
-  
+
   g <- createGraphFromAdjacencyMatrix(net_obj)
-  
+
   #numero de repetições
   n <- length(V(g))
 
   #criar tabela
   mat <- matrix(ncol=2,nrow=n, 0)
   mat <- as.data.frame(mat)
-  
-  
+
+
   #adicionar o nome dos vértices
   node_names <- igraph::vertex.attributes(g)$`TRUE`
-  
+
   mat[, 1] <- node_names
-  
-  
+
+
   #calcular medida de centralidade
   delete.randoms <- runif(n=n, min=1, max=n)
-  
+
   #adcionar valores de centralidade à tabela
   mat[,2] <- delete.randoms
-  
-  
+
+
   #ordenar vértices pelo valor da centralidade
   matri <- mat[order(mat[,2], decreasing = TRUE),]
 
@@ -62,33 +62,76 @@ random.att.nira <- function(net_obj, dt){
     components[i] <- igraph::components(g2)$no
 
     #g2 <- igraph::delete.vertices(g2, v=which(V(g2)$names==matri[i,1])) #remover vértice pela ordem na tabela
-    
-    
+
+
     #w <- which(colnames(dt2)==matri[i,1])
     w <- sample(1:ncol(dt2), 1)
-    
-    # remover nó ----  
+
+    # remover nó ----
     dt2 <- dt2[, -w] #remover linha correspondente na tabela de dados
-    
+
     #if(i == 17){browser()}
     # estimar rede ----
-    if(length(colnames(dt2)) > 2){
-      print("Random attack")
-      print("n columns")
-      print(length(colnames(dt2)))
-      print(colnames(dt2))
-      
-      model_net <- estimateNetwork(dt2, default = c("IsingFit"))
-      g2 <- createGraphFromAdjacencyMatrix(model_net)
-      
-    } else {
-      print("Matrix with 2 or less columns")
-    }
-    
-    #gráfico após cada remoção (layout não está fixo)
-    #plot(g2, vertex.size=20, vertex.color="darkolivegreen3",
-         #vertex.label=V(g2)$names, vertex.label.cex=0.8, edge.width=2)
+    model_net <- NULL
+    g2 <- NULL
+    warning_value <- NULL
+    error_value <- NULL
 
+    tryCatch(
+      expr = {
+        set.seed(1234)
+        model_net <- estimateNetwork(dt2, default = c("IsingFit"))
+        g2 <- createGraphFromAdjacencyMatrix(model_net)
+
+        print("ncols")
+        print(ncol(dt2))
+
+        message("Network successfully estimated.")
+
+      },
+
+      warning = function(w) {
+        message('Caught a warning!')
+        print(w)
+
+        # Get the value returned in the warning
+        warning_value <<- w$message
+
+        message("Forcing network estimation")
+
+        tryCatch(
+          expr = {
+            set.seed(1234)
+            model_net <<- estimateNetwork(dt2, default = c("IsingFit"))
+            g2 <<- createGraphFromAdjacencyMatrix(model_net)
+          },
+          error = function(e) {
+            message('Caught an error!')
+            print(e)
+            error_value <<- e$message
+          }
+        )
+
+
+        print(error_value)
+
+
+        # Check if there was also an error
+        if (!is.null(error_value)) {
+          message("Error in network estimation")
+        }
+
+      },
+      finally = {
+        message('All done')
+
+      }
+    )
+
+    if (!is.null(error_value)) {
+      message("Error in network estimation")
+      break
+    }
   }
 
   #tabela com os resultados do ataque
