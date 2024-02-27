@@ -10,20 +10,20 @@ cas.att.allev <- function(net_obj, dt){
   dt2 <- dt
 
 
-  #registo dos resultados
-  numberofvertices<-integer(n-1)
-  clustersizes<-integer(n-1)
-  cohesion<-integer(n-1)
-  averagepath<-integer(n-1)
-  adhesion<-integer(n-1)
-  edgedensity <- integer(n-1)
-  transitivity <- integer(n-1)
-  radius<- integer(n-1)
-  density<- integer(n-1)
-  centralization<-integer(n-1)
-  strength <- integer(n-1)
-  vertex <- integer(n-1)
-  components <- integer(n-1)
+  #registro dos resultados
+  numberofvertices<-rep(NA, n-1)
+  clustersizes<-rep(NA, n-1)
+  cohesion<-rep(NA, n-1)
+  averagepath<-rep(NA, n-1)
+  adhesion<-rep(NA, n-1)
+  edgedensity <- rep(NA, n-1)
+  transitivity <- rep(NA, n-1)
+  radius <- rep(NA, n-1)
+  density <- rep(NA, n-1)
+  centralization <- rep(NA, n-1)
+  strength <- rep(NA, n-1)
+  vertex <- rep(NA, n-1)
+  components <- rep(NA, n-1)
 
 
   #remoção dos vértices
@@ -31,8 +31,8 @@ cas.att.allev <- function(net_obj, dt){
 
     print(i)
 
+
     alleviating_simulated_responses <- simulateAllevResponses(model_net)
-    rm(model_net)
 
     alleviating_sum_scores <- customCalculateAllevSumScores(alleviating_simulated_responses)
 
@@ -40,12 +40,6 @@ cas.att.allev <- function(net_obj, dt){
     node_max <- names(sort(abs(alleviating_sum_scores), decreasing = TRUE))[1]
     strength_max <- sort(abs(alleviating_sum_scores), decreasing = TRUE)[1]
     w <- which(colnames(dt2)==node_max)
-
-
-    # testing
-    #node_max <- "PhyAct"
-    #strength_max <- 10
-    #w <- sample(1:ncol(dt2), 1)
 
     vertex[i] <- node_max
     strength[i] <- strength_max
@@ -65,59 +59,66 @@ cas.att.allev <- function(net_obj, dt){
 
     dt2 <- dt2[, -w] #remover coluna correspondente na tabela de dados
 
+    model_net <- NULL
+    g2 <- NULL
+    warning_value <- NULL
+    error_value <- NULL
 
-    if(length(colnames(dt2)) > 2){
-      print("n columns")
-      print(length(colnames(dt2)))
-      print(colnames(dt2))
+    tryCatch(
+      expr = {
+        set.seed(1234)
+        model_net <- estimateNetwork(dt2, default = c("IsingFit"))
+        g2 <- createGraphFromAdjacencyMatrix(model_net)
 
-      tryCatch(
-        expr = {
+        print("ncols")
+        print(ncol(dt2))
 
-          set.seed(1234)
-          model_net <- estimateNetwork(dt2, default = c("IsingFit"))
-          g2 <- createGraphFromAdjacencyMatrix(model_net)
+        message("Network successfully estimated.")
 
-          message("Network successfully estimated.")
+      },
 
-        },
-        error = function(e){
-          message('Caught an error!')
-          print(e)
-        },
-        warning = function(w){
-          message('Caught an warning!')
-          print(w)
+      warning = function(w) {
+        message('Caught a warning!')
+        print(w)
 
-          # Get the value returned in the warning
-          warning_value <<- w$message
+        # Get the value returned in the warning
+        warning_value <<- w$message
 
+        message("Forcing network estimation")
 
-        },
-        finally = {
-
-          if (!is.null(warning_value)) {
-
-            message("Forcing network estimation")
-
+        tryCatch(
+          expr = {
             set.seed(1234)
-            model_net <- estimateNetwork(dt2, default = c("IsingFit"))
-            g2 <- createGraphFromAdjacencyMatrix(model_net)
-
+            model_net <<- estimateNetwork(dt2, default = c("IsingFit"))
+            g2 <<- createGraphFromAdjacencyMatrix(model_net)
+          },
+          error = function(e) {
+            message('Caught an error!')
+            print(e)
+            error_value <<- e$message
           }
+        )
 
-          message('All done')
 
+        print(error_value)
+
+
+        # Check if there was also an error
+        if (!is.null(error_value)) {
+          message("Error in network estimation")
         }
-      )
 
+      },
+      finally = {
+        message('All done')
 
+      }
+    )
+
+    if (!is.null(error_value)) {
+      message("Error in network estimation")
+      break
     }
-    else{
-      print("Matrix with 2 or less columns")
-    }
-
-
   }
 
   #tabela com os resultados do ataque
