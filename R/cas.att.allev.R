@@ -64,17 +64,27 @@ cas.att.allev <- function(net_obj, dt){
     warning_value <- NULL
     error_value <- NULL
 
+    # estimar rede ----
+    model_net <- NULL
+    g2 <- NULL
+    warning_value <- NULL
+    error_value <- NULL
+
     tryCatch(
       expr = {
         set.seed(1234)
         model_net <- estimateNetwork(dt2, default = c("IsingFit"))
         g2 <- createGraphFromAdjacencyMatrix(model_net)
 
-        print("ncols")
-        print(ncol(dt2))
 
         message("Network successfully estimated.")
 
+      },
+
+      error = function(e) {
+        message('Caught an error!')
+        print(e)
+        error_value <<- e$message
       },
 
       warning = function(w) {
@@ -85,6 +95,7 @@ cas.att.allev <- function(net_obj, dt){
         warning_value <<- w$message
 
         message("Forcing network estimation")
+
 
         tryCatch(
           expr = {
