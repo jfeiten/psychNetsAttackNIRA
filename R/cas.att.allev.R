@@ -36,9 +36,9 @@ cas.att.allev <- function(net_obj, dt){
 
     alleviating_sum_scores <- customCalculateAllevSumScores(alleviating_simulated_responses)
 
-
-    node_max <- names(sort(abs(alleviating_sum_scores), decreasing = TRUE))[1]
-    strength_max <- sort(abs(alleviating_sum_scores), decreasing = TRUE)[1]
+    sorted_sum_scores <- sort(alleviating_sum_scores, decreasing = FALSE)
+    node_max <- names(sorted_sum_scores)[1]
+    strength_max <- sorted_sum_scores[1]
     w <- which(colnames(dt2)==node_max)
 
     vertex[i] <- node_max
