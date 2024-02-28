@@ -70,7 +70,6 @@ random.att.nira <- function(net_obj, dt){
     # remover nó ----
     dt2 <- dt2[, -w] #remover linha correspondente na tabela de dados
 
-    #if(i == 17){browser()}
     # estimar rede ----
     model_net <- NULL
     g2 <- NULL
@@ -83,11 +82,15 @@ random.att.nira <- function(net_obj, dt){
         model_net <- estimateNetwork(dt2, default = c("IsingFit"))
         g2 <- createGraphFromAdjacencyMatrix(model_net)
 
-        print("ncols")
-        print(ncol(dt2))
 
         message("Network successfully estimated.")
 
+      },
+
+      error = function(e) {
+        message('Caught an error!')
+        print(e)
+        error_value <<- e$message
       },
 
       warning = function(w) {
@@ -98,6 +101,7 @@ random.att.nira <- function(net_obj, dt){
         warning_value <<- w$message
 
         message("Forcing network estimation")
+
 
         tryCatch(
           expr = {
