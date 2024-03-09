@@ -1,6 +1,6 @@
 createGraphFromAdjacencyMatrix <- function(netobj) {
   graph_from_adjacency_matrix(
-    abs(netobj$graph),
+    netobj$graph,
     mode = "lower",
     weighted = TRUE,
     diag = FALSE,
